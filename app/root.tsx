@@ -1,13 +1,15 @@
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, MetaFunction } from "@remix-run/node";
 import {
   Links,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
 
 import stylesheet from "~/tailwind.css?url";
+import { taitanSchema } from "./taitan";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -23,7 +25,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="bg-neutral-50">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -33,5 +35,26 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const data = useLoaderData<typeof loader>();
+  return <>
+    <header className="bg-cerise text-offwhite fixed left-0 right-0 text-center">{data.nav.map(node =>
+      <a
+        className="p-2"
+        key={node.slug}
+        href={node.slug}
+      >{node.title}</a>
+    )}</header>
+    <Outlet />
+  </>;
+}
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  return [
+    { title: data?.title + " - Konglig Datasektionen" },
+  ];
+};
+
+export async function loader() {
+  const res = await fetch("https://taitan.datasektionen.se/");
+  return taitanSchema.parse(await res.json());
 }
